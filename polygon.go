@@ -84,7 +84,7 @@ func (p *Polygon) UnmarshalWKB(in []byte) error {
 }
 
 func (p Polygon) MarshalWKT() string {
-	return fmt.Sprintf("POLYGON (%s)", p.WKT())
+	return fmt.Sprintf("POLYGON %s", p.WKT())
 }
 
 func (p *Polygon) UnmarshalWKT(in string) error {
@@ -137,9 +137,10 @@ func Interface2Polygon(a interface{}) (Polygon, error) {
 func ExtractWKTPolygon(in string) (Polygon, error) {
 	//POLYGON ((4 9.5, 2 9.5, 4 5.5, 4 9.5, 4 9.5))
 
-	rings := strings.Split(strings.Trim(in, "()"), ",")
+	rings := strings.SplitAfter(strings.TrimSuffix(strings.TrimPrefix(in, "("), ")"), "),")
 	p := Polygon{}
-	for _, pointStr := range rings[:len(rings)] {
+	for _, pointStr := range rings {
+		pointStr = strings.TrimSuffix(pointStr, ",")
 		ring, _ := ExtractWKTLinearRing(strings.Trim(pointStr, " "))
 		p = append(p, ring)
 	}

@@ -138,7 +138,8 @@ func TestPolygonWKT(t *testing.T) {
 	wktPolygon := p.MarshalWKT()
 
 	var pout Polygon
-	err := pout.UnmarshalWKT(wktPolygon)
+	err := pout.UnmarshalWKT("POLYGON ((124.825741335906 -27.4770818851779,124.76778384003 -28.3670436543958,125.79920096678 -28.4138865451055,125.848920710608 -27.5235483019135,124.825741335906 -27.4770818851779))")
+	err = pout.UnmarshalWKT(wktPolygon)
 	if err != nil {
 		t.Errorf("WKT LineString Test failed, error in WKT deserialisation: %s", err)
 	}
