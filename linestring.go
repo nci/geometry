@@ -1,17 +1,29 @@
 package geometry
 
 import (
+	"gopkg.in/mgo.v2/bson"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"reflect"
 	"regexp"
 	"strings"
 )
 
 type LineString []Point
+
+
+func (l LineString) Equals(ls LineString) bool {
+	for i, point := range(l) {
+		if !point.Equals(ls[i]) {
+			return false
+		}
+	}
+	return true
+}
 
 func (l LineString) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
@@ -120,6 +132,46 @@ func (l *LineString) UnmarshalJSON(in []byte) error {
 }
 
 type LinearRing []Point
+
+func (r LinearRing) Equals(lr LinearRing) bool {
+	for i, point := range(r) {
+		if !point.Equals(lr[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// GetBSON implements bson.Getter.
+func (r LinearRing) GetBSON() (interface{}, error) {
+	out := make([]Point, len(r)+1)
+	for i, point := range(r) {
+		out[i] = point
+	}
+	out[len(r)] = r[0]
+	return out, nil
+}
+
+// SetBSON implements bson.Setter.
+func (r *LinearRing) SetBSON(raw bson.Raw) error {
+
+	out := make(map[string]interface{})
+	bsonErr := raw.Unmarshal(&out)
+
+	if bsonErr == nil {
+		aux := make([]Point, len(out)-1)
+		for i:=0; i<len(aux); i++ {
+			key := strconv.Itoa(i)
+			aux[i] = Point{out[key].(map[string]interface{})["x"].(float64), 
+				       out[key].(map[string]interface{})["y"].(float64)} 	               
+		}
+
+		*r = aux
+		return nil
+	} else {
+		return bsonErr
+	}
+}
 
 func (r LinearRing) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)

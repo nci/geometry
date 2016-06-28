@@ -13,6 +13,15 @@ import (
 
 type Polygon []LinearRing
 
+func (p Polygon) Equals(q Polygon) bool {
+	for i, lr := range(p) {
+		if !lr.Equals(q[i]) {
+			return false
+		}
+	}
+	return true
+}
+
 func (p Polygon) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
 	var enc uint8

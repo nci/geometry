@@ -1,7 +1,9 @@
 package geometry
 
 import (
+	"gopkg.in/mgo.v2/bson"
 	"encoding/json"
+	"fmt"
 	"testing"
 )
 
@@ -14,10 +16,27 @@ func TestPointJSON(t *testing.T) {
 	}
 	var pout Point
 	err = json.Unmarshal(out, &pout)
-        for i, coord := range(p) {
-		if pout[i] != coord {
-			t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
-		}
+
+		
+	if !pout.Equals(p) {
+		t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
+	}
+}
+
+func TestPointBSON(t *testing.T) {
+	p := Point{4.0, 9.5}
+
+	out, err := bson.Marshal(&p)
+	if err != nil {
+		t.Errorf("JSON Point Test failed, error in BSON serialisation: %s", err)
+	}
+	fmt.Println(out)
+	var pout Point
+	err = bson.Unmarshal(out, &pout)
+	fmt.Println(pout)
+
+	if !pout.Equals(p) {
+		t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
 	}
 }
 
@@ -31,10 +50,8 @@ func TestPointWKT(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKT Point Test failed, error in WKT deserialisation: %s", err)
 	}
-        for i, coord := range(p) {
-		if pout[i] != coord {
-			t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
-		}
+	if !pout.Equals(p) {
+		t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
 	}
 }
 
@@ -48,14 +65,30 @@ func TestPointWKB(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKB Point Test failed, error in WKB deserialisation: %s", err)
 	}
-        for i, coord := range(p) {
-		if pout[i] != coord {
-			t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
-		}
+
+	if !pout.Equals(p) {
+		t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
 	}
 }
 
-func TestLinearStringJSON(t *testing.T) {
+func TestLinearRingBSON(t *testing.T) {
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
+	ls := LinearRing{p1, p2, p3}
+
+	out, err := bson.Marshal(ls)
+	if err != nil {
+		t.Errorf("JSON LineString Test failed, error in JSON serialisation: %s", err)
+	}
+	var lsout LinearRing
+	err = bson.Unmarshal(out, &lsout)
+	fmt.Println(lsout, err)
+	if !lsout.Equals(ls) {
+		t.Errorf("JSON LineString Test failed, expected: %+v, got: %+v", ls, lsout)
+	}
+}
+func TestLineStringJSON(t *testing.T) {
 	p1 := Point{4.0, 9.5}
 	p2 := Point{2.0, 9.5}
 	p3 := Point{4.0, 5.5}
@@ -67,16 +100,13 @@ func TestLinearStringJSON(t *testing.T) {
 	}
 	var lsout LineString
 	err = json.Unmarshal(out, &lsout)
-	for i, point := range lsout {
-        	for j, coord := range(point) {
-			if ls[i][j] != coord {
-				t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", ls, lsout)
-			}
-		}
+	
+	if !lsout.Equals(ls) {
+		t.Errorf("JSON LineString Test failed, expected: %+v, got: %+v", ls, lsout)
 	}
 }
 
-func TestLinearStringWKT(t *testing.T) {
+func TestLineStringWKT(t *testing.T) {
 	p1 := Point{4.0, 9.5}
 	p2 := Point{2.0, 9.5}
 	p3 := Point{4.0, 5.5}
@@ -89,16 +119,13 @@ func TestLinearStringWKT(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKT LineString Test failed, error in WKT deserialisation: %s", err)
 	}
-	for i, point := range lsout {
-        	for j, coord := range(point) {
-			if ls[i][j] != coord {
-				t.Errorf("WKT LinearString Test failed, expected: %+v, got: %+v", ls, lsout)
-			}
-		}
+	
+	if !lsout.Equals(ls) {
+		t.Errorf("JSON LineString Test failed, expected: %+v, got: %+v", ls, lsout)
 	}
 }
 
-func TestLinearStringWKB(t *testing.T) {
+func TestLineStringWKB(t *testing.T) {
 	p1 := Point{4.0, 9.5}
 	p2 := Point{2.0, 9.5}
 	p3 := Point{4.0, 5.5}
@@ -111,12 +138,9 @@ func TestLinearStringWKB(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKB LineString Test failed, error in WKT deserialisation: %s", err)
 	}
-	for i, point := range lsout {
-        	for j, coord := range(point) {
-			if ls[i][j] != coord {
-				t.Errorf("WKB LinearString Test failed, expected: %+v, got: %+v", ls, lsout)
-			}
-		}
+	
+	if !lsout.Equals(ls) {
+		t.Errorf("JSON LineString Test failed, expected: %+v, got: %+v", ls, lsout)
 	}
 }
 
@@ -132,14 +156,9 @@ func TestPolygonJSON(t *testing.T) {
 	}
 	var pout Polygon
 	err = json.Unmarshal(out, &pout)
-	for i, ring := range pout {
-		for j, point := range ring {
-        		for k, coord := range(point) {
-				if p[i][j][k] != coord {
-					t.Errorf("JSON Polygon Test failed, expected: %+v, got: %+v", p, pout)
-				}
-			}
-		}
+
+	if !pout.Equals(p) {
+		t.Errorf("JSON Polygon Test failed, expected: %+v, got: %+v", p, pout)
 	}
 }
 
@@ -157,14 +176,9 @@ func TestPolygonWKT(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKT LineString Test failed, error in WKT deserialisation: %s", err)
 	}
-	for i, ring := range pout {
-		for j, point := range ring {
-        		for k, coord := range(point) {
-				if p[i][j][k] != coord {
-					t.Errorf("WKT Polygon Test failed, expected: %+v, got: %+v", p, pout)
-				}
-			}
-		}
+	
+	if !pout.Equals(p) {
+		t.Errorf("WKT Polygon Test failed, expected: %+v, got: %+v", p, pout)
 	}
 }
 
@@ -181,14 +195,9 @@ func TestPolygonWKB(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKB Polygon Test failed, error in WKB deserialisation: %s", err)
 	}
-	for i, ring := range pout {
-		for j, point := range ring {
-        		for k, coord := range(point) {
-				if p[i][j][k] != coord {
-					t.Errorf("WKB Polygon Test failed, expected: %+v, got: %+v", p, pout)
-				}
-			}
-		}
+	
+	if !pout.Equals(p) {
+		t.Errorf("WKT Polygon Test failed, expected: %+v, got: %+v", p, pout)
 	}
 }
 
@@ -210,16 +219,9 @@ func TestMultiPolygonJSON(t *testing.T) {
 	if err != nil {
 		t.Errorf("JSON MultiPolygon Test failed, error in JSON deserialisation: %s", err)
 	}
-	for i, poly := range mout {
-		for j, ring := range poly {
-			for k, point := range ring {
-        			for l, coord := range(point) {
-					if m[i][j][k][l] != coord {
-						t.Errorf("JSON MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
-					}
-				}
-			}
-		}
+	
+	if !mout.Equals(m) {
+		t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
 	}
 }
 
@@ -239,16 +241,9 @@ func TestMultiPolygonWKT(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKT MultiPolygon Test failed, error in WKT deserialisation: %s", err)
 	}
-	for i, poly := range mout {
-		for j, ring := range poly {
-			for k, point := range ring {
-        			for l, coord := range(point) {
-					if m[i][j][k][l] != coord {
-						t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
-					}
-				}
-			}
-		}
+	
+	if !mout.Equals(m) {
+		t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
 	}
 }
 
@@ -268,15 +263,8 @@ func TestMultiPolygonWKB(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKB MultiPolygon Test failed, error in WKB deserialisation: %s", err)
 	}
-	for i, poly := range mout {
-		for j, ring := range poly {
-			for k, point := range ring {
-        			for l, coord := range(point) {
-					if m[i][j][k][l] != coord {
-						t.Errorf("WKB MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
-					}
-				}
-			}
-		}
+	
+	if !mout.Equals(m) {
+		t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
 	}
 }

@@ -13,6 +13,15 @@ import (
 
 type MultiPolygon []Polygon
 
+func (m MultiPolygon) Equals(n MultiPolygon) bool {
+	for i, p := range(m) {
+		if !p.Equals(n[i]) {
+			return false
+		}
+	}
+	return true
+}
+
 func (m MultiPolygon) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
 	numPolys := uint32(len(m))

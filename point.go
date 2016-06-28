@@ -1,6 +1,7 @@
 package geometry
 
 import (
+	"gopkg.in/mgo.v2/bson"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
@@ -12,9 +13,36 @@ import (
 	"strings"
 )
 
-type Point []float64
+type Point struct {
+	X float64
+	Y float64
+}
+
+func (p Point) Equals(q Point) bool {
+	if p == q {
+		return true
+	}
+	return false
+}
 
 var endian map[uint8]binary.ByteOrder = map[uint8]binary.ByteOrder{0: binary.BigEndian, 1: binary.LittleEndian}
+
+// GetBSON implements bson.Getter.
+func (p *Point) GetBSON() (interface{}, error) {
+	return []float64{p.X, p.Y}, nil
+}
+
+// SetBSON implements bson.Setter.
+func (p *Point) SetBSON(raw bson.Raw) error {
+	out := make(map[string]interface{})
+	bsonErr := raw.Unmarshal(&out)
+	if bsonErr == nil {
+		*p = Point{X: out["0"].(float64), Y: out["1"].(float64)}
+		return nil
+	} else {
+		return bsonErr
+	}
+}
 
 func (p Point) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
@@ -23,11 +51,11 @@ func (p Point) WKB(end binary.ByteOrder) []byte {
 }
 
 func (p Point) WKT() string {
-	return fmt.Sprintf("%g%s%g", p[0], " ", p[1])
+	return fmt.Sprintf("%g%s%g", p.X, " ", p.Y)
 }
 
 func (p Point) JSON() string {
-	return fmt.Sprintf("%s%g%s%g%s", "[", p[0], ",", p[1], "]")
+	return fmt.Sprintf("%s%g%s%g%s", "[", p.X, ",", p.Y, "]")
 }
 
 func (p Point) MarshalWKB(mode uint8) []byte {
