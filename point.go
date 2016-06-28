@@ -12,9 +12,7 @@ import (
 	"strings"
 )
 
-type Point struct {
-	X, Y float64
-}
+type Point []float64
 
 var endian map[uint8]binary.ByteOrder = map[uint8]binary.ByteOrder{0: binary.BigEndian, 1: binary.LittleEndian}
 
@@ -25,11 +23,11 @@ func (p Point) WKB(end binary.ByteOrder) []byte {
 }
 
 func (p Point) WKT() string {
-	return fmt.Sprintf("%g%s%g", p.X, " ", p.Y)
+	return fmt.Sprintf("%g%s%g", p[0], " ", p[1])
 }
 
 func (p Point) JSON() string {
-	return fmt.Sprintf("%s%g%s%g%s", "[", p.X, ",", p.Y, "]")
+	return fmt.Sprintf("%s%g%s%g%s", "[", p[0], ",", p[1], "]")
 }
 
 func (p Point) MarshalWKB(mode uint8) []byte {
@@ -110,7 +108,7 @@ func Interface2Point(a interface{}) (*Point, error) {
 		return nil, errors.New("Point of wrong dimension")
 	}
 
-	return &Point{X: s.Index(0).Interface().(float64), Y: s.Index(1).Interface().(float64)}, nil
+	return &Point{s.Index(0).Interface().(float64), s.Index(1).Interface().(float64)}, nil
 
 }
 

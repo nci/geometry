@@ -6,7 +6,7 @@ import (
 )
 
 func TestPointJSON(t *testing.T) {
-	p := Point{X: 4.0, Y: 9.5}
+	p := Point{4.0, 9.5}
 
 	out, err := json.Marshal(p)
 	if err != nil {
@@ -14,13 +14,15 @@ func TestPointJSON(t *testing.T) {
 	}
 	var pout Point
 	err = json.Unmarshal(out, &pout)
-	if pout != p {
-		t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
+        for i, coord := range(p) {
+		if pout[i] != coord {
+			t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
+		}
 	}
 }
 
 func TestPointWKT(t *testing.T) {
-	p := Point{X: 4.0, Y: 9.5}
+	p := Point{4.0, 9.5}
 
 	wktPoint := p.MarshalWKT()
 
@@ -29,13 +31,15 @@ func TestPointWKT(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKT Point Test failed, error in WKT deserialisation: %s", err)
 	}
-	if pout != p {
-		t.Errorf("WKT Point Test failed, expected: %+v, got: %+v", p, pout)
+        for i, coord := range(p) {
+		if pout[i] != coord {
+			t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
+		}
 	}
 }
 
 func TestPointWKB(t *testing.T) {
-	p := Point{X: 4.0, Y: 9.5}
+	p := Point{4.0, 9.5}
 
 	wkbPoint := p.MarshalWKB(1)
 
@@ -44,15 +48,17 @@ func TestPointWKB(t *testing.T) {
 	if err != nil {
 		t.Errorf("WKB Point Test failed, error in WKB deserialisation: %s", err)
 	}
-	if pout != p {
-		t.Errorf("WKB Point Test failed, expected: %+v, got: %+v", p, pout)
+        for i, coord := range(p) {
+		if pout[i] != coord {
+			t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
+		}
 	}
 }
 
 func TestLinearStringJSON(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
 	ls := LineString{p1, p2, p3}
 
 	out, err := json.Marshal(ls)
@@ -62,16 +68,18 @@ func TestLinearStringJSON(t *testing.T) {
 	var lsout LineString
 	err = json.Unmarshal(out, &lsout)
 	for i, point := range lsout {
-		if point != ls[i] {
-			t.Errorf("JSON LineString Test failed, expected: %+v, got: %+v", point, ls[i])
+        	for j, coord := range(point) {
+			if ls[i][j] != coord {
+				t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", ls, lsout)
+			}
 		}
 	}
 }
 
 func TestLinearStringWKT(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
 	ls := LineString{p1, p2, p3}
 
 	wktLineString := ls.MarshalWKT()
@@ -82,16 +90,18 @@ func TestLinearStringWKT(t *testing.T) {
 		t.Errorf("WKT LineString Test failed, error in WKT deserialisation: %s", err)
 	}
 	for i, point := range lsout {
-		if point != ls[i] {
-			t.Errorf("WKT LineString Test failed, expected: %+v, got: %+v", point, ls[i])
+        	for j, coord := range(point) {
+			if ls[i][j] != coord {
+				t.Errorf("WKT LinearString Test failed, expected: %+v, got: %+v", ls, lsout)
+			}
 		}
 	}
 }
 
 func TestLinearStringWKB(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
 	ls := LineString{p1, p2, p3}
 
 	wkbLineString := ls.MarshalWKB(1)
@@ -102,16 +112,18 @@ func TestLinearStringWKB(t *testing.T) {
 		t.Errorf("WKB LineString Test failed, error in WKT deserialisation: %s", err)
 	}
 	for i, point := range lsout {
-		if point != ls[i] {
-			t.Errorf("WKB LineString Test failed, expected: %+v, got: %+v", point, ls[i])
+        	for j, coord := range(point) {
+			if ls[i][j] != coord {
+				t.Errorf("WKB LinearString Test failed, expected: %+v, got: %+v", ls, lsout)
+			}
 		}
 	}
 }
 
 func TestPolygonJSON(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
 	p := Polygon{LinearRing{p1, p2, p3}}
 
 	out, err := json.Marshal(p)
@@ -122,17 +134,19 @@ func TestPolygonJSON(t *testing.T) {
 	err = json.Unmarshal(out, &pout)
 	for i, ring := range pout {
 		for j, point := range ring {
-			if point != p[i][j] {
-				t.Errorf("JSON Polygon Test failed, expected: %+v, got: %+v", point, p[i][j])
+        		for k, coord := range(point) {
+				if p[i][j][k] != coord {
+					t.Errorf("JSON Polygon Test failed, expected: %+v, got: %+v", p, pout)
+				}
 			}
 		}
 	}
 }
 
 func TestPolygonWKT(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
 	p := Polygon{LinearRing{p1, p2, p3}}
 
 	wktPolygon := p.MarshalWKT()
@@ -145,17 +159,19 @@ func TestPolygonWKT(t *testing.T) {
 	}
 	for i, ring := range pout {
 		for j, point := range ring {
-			if point != p[i][j] {
-				t.Errorf("WKT Polygon Test failed, expected: %+v, got: %+v", point, p[i][j])
+        		for k, coord := range(point) {
+				if p[i][j][k] != coord {
+					t.Errorf("WKT Polygon Test failed, expected: %+v, got: %+v", p, pout)
+				}
 			}
 		}
 	}
 }
 
 func TestPolygonWKB(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
 	p := Polygon{LinearRing{p1, p2, p3}}
 
 	wkbPolygon := p.MarshalWKB(1)
@@ -167,20 +183,22 @@ func TestPolygonWKB(t *testing.T) {
 	}
 	for i, ring := range pout {
 		for j, point := range ring {
-			if point != p[i][j] {
-				t.Errorf("WKB Polygon Test failed, expected: %+v, got: %+v, loop: %d", point, p[i][j], j)
+        		for k, coord := range(point) {
+				if p[i][j][k] != coord {
+					t.Errorf("WKB Polygon Test failed, expected: %+v, got: %+v", p, pout)
+				}
 			}
 		}
 	}
 }
 
 func TestMultiPolygonJSON(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
-	p4 := Point{X: 8.0, Y: 9.5}
-	p5 := Point{X: 6.0, Y: 9.5}
-	p6 := Point{X: 8.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
+	p4 := Point{8.0, 9.5}
+	p5 := Point{6.0, 9.5}
+	p6 := Point{8.0, 5.5}
 	m := MultiPolygon{Polygon{LinearRing{p1, p2, p3}}, Polygon{LinearRing{p4, p5, p6}}}
 
 	out, err := json.Marshal(m)
@@ -195,8 +213,10 @@ func TestMultiPolygonJSON(t *testing.T) {
 	for i, poly := range mout {
 		for j, ring := range poly {
 			for k, point := range ring {
-				if point != m[i][j][k] {
-					t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", point)
+        			for l, coord := range(point) {
+					if m[i][j][k][l] != coord {
+						t.Errorf("JSON MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
+					}
 				}
 			}
 		}
@@ -204,12 +224,12 @@ func TestMultiPolygonJSON(t *testing.T) {
 }
 
 func TestMultiPolygonWKT(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
-	p4 := Point{X: 8.0, Y: 9.5}
-	p5 := Point{X: 6.0, Y: 9.5}
-	p6 := Point{X: 8.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
+	p4 := Point{8.0, 9.5}
+	p5 := Point{6.0, 9.5}
+	p6 := Point{8.0, 5.5}
 	m := MultiPolygon{Polygon{LinearRing{p1, p2, p3}}, Polygon{LinearRing{p4, p5, p6}}}
 
 	wktMultiPolygon := m.MarshalWKT()
@@ -222,8 +242,10 @@ func TestMultiPolygonWKT(t *testing.T) {
 	for i, poly := range mout {
 		for j, ring := range poly {
 			for k, point := range ring {
-				if point != m[i][j][k] {
-					t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", point)
+        			for l, coord := range(point) {
+					if m[i][j][k][l] != coord {
+						t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
+					}
 				}
 			}
 		}
@@ -231,12 +253,12 @@ func TestMultiPolygonWKT(t *testing.T) {
 }
 
 func TestMultiPolygonWKB(t *testing.T) {
-	p1 := Point{X: 4.0, Y: 9.5}
-	p2 := Point{X: 2.0, Y: 9.5}
-	p3 := Point{X: 4.0, Y: 5.5}
-	p4 := Point{X: 8.0, Y: 9.5}
-	p5 := Point{X: 6.0, Y: 9.5}
-	p6 := Point{X: 8.0, Y: 5.5}
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
+	p4 := Point{8.0, 9.5}
+	p5 := Point{6.0, 9.5}
+	p6 := Point{8.0, 5.5}
 	m := MultiPolygon{Polygon{LinearRing{p1, p2, p3}}, Polygon{LinearRing{p4, p5, p6}}}
 
 	wkbMultiPolygon := m.MarshalWKB(1)
@@ -249,8 +271,10 @@ func TestMultiPolygonWKB(t *testing.T) {
 	for i, poly := range mout {
 		for j, ring := range poly {
 			for k, point := range ring {
-				if point != m[i][j][k] {
-					t.Errorf("WKB MultiPolygon Test failed, expected: %+v, got: %+v", point)
+        			for l, coord := range(point) {
+					if m[i][j][k][l] != coord {
+						t.Errorf("WKB MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
+					}
 				}
 			}
 		}
