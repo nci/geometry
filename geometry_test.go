@@ -30,10 +30,10 @@ func TestPointBSON(t *testing.T) {
 	if err != nil {
 		t.Errorf("JSON Point Test failed, error in BSON serialisation: %s", err)
 	}
-	fmt.Println(out)
+	fmt.Println("Marshal", out, err)
 	var pout Point
 	err = bson.Unmarshal(out, &pout)
-	fmt.Println(pout)
+	fmt.Println("Unmarshal", pout, err)
 
 	if !pout.Equals(p) {
 		t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)

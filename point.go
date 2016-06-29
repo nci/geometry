@@ -28,7 +28,7 @@ func (p Point) Equals(q Point) bool {
 var endian map[uint8]binary.ByteOrder = map[uint8]binary.ByteOrder{0: binary.BigEndian, 1: binary.LittleEndian}
 
 // GetBSON implements bson.Getter.
-func (p *Point) GetBSON() (interface{}, error) {
+func (p Point) GetBSON() (interface{}, error) {
 	return []float64{p.X, p.Y}, nil
 }
 
