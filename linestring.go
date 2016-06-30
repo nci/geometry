@@ -7,14 +7,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
-	"reflect"
 	"regexp"
 	"strings"
 )
 
 type LineString []Point
 
+type LineStringView struct {
+	Type  string  `json:"type" bson:"type"`
+	Coords [][]float64 `json:"coordinates" bson:"coordinates"`
+}
 
 func (l LineString) Equals(ls LineString) bool {
 	for i, point := range(l) {
@@ -50,17 +52,12 @@ func (l LineString) WKT() string {
 	return out
 }
 
-func (l LineString) JSON() string {
-	out := "["
-
-	for i, point := range l {
-		if i == 0 {
-			out += point.JSON()
-		} else {
-			out += fmt.Sprintf(",%s", point.JSON())
-		}
+func (r LineString) AsArray() [][]float64 {
+	out := [][]float64{}	
+	
+	for _, point := range r {
+		out = append(out, point.AsArray())
 	}
-	out += "]"
 
 	return out
 }
@@ -116,22 +113,28 @@ func (l *LineString) UnmarshalWKT(in string) error {
 }
 
 func (l LineString) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf(`{"type": "LineString", "coordinates":%s}`, l.JSON())), nil
+	lExp := LineStringView{"LineString", l.AsArray()}
+	return json.Marshal(lExp)
 }
 
 func (l *LineString) UnmarshalJSON(in []byte) error {
-	dict := make(map[string]interface{})
-	err := json.Unmarshal(in, &dict)
+	lView := LineStringView{}
+	err := json.Unmarshal(in, &lView)
 
 	if err != nil {
 		return err
 	}
-	*l, err = Interface2LineString(dict["coordinates"])
+	*l, err = Slice2LineString(lView.Coords)
 
 	return err
 }
 
 type LinearRing []Point
+
+type LinearRingView struct {
+	Type  string  `json:"type" bson:"type"`
+	Coords [][]float64 `json:"coordinates" bson:"coordinates"`
+}
 
 func (r LinearRing) Equals(lr LinearRing) bool {
 	for i, point := range(r) {
@@ -142,36 +145,6 @@ func (r LinearRing) Equals(lr LinearRing) bool {
 	return true
 }
 
-// GetBSON implements bson.Getter.
-func (r LinearRing) GetBSON() (interface{}, error) {
-	out := make([]Point, len(r)+1)
-	for i, point := range(r) {
-		out[i] = point
-	}
-	out[len(r)] = r[0]
-	return out, nil
-}
-
-// SetBSON implements bson.Setter.
-func (r *LinearRing) SetBSON(raw bson.Raw) error {
-
-	out := make(map[string]interface{})
-	bsonErr := raw.Unmarshal(&out)
-
-	if bsonErr == nil {
-		aux := make([]Point, len(out)-1)
-		for i:=0; i<len(aux); i++ {
-			key := strconv.Itoa(i)
-			aux[i] = Point{out[key].(map[string]interface{})["x"].(float64), 
-				       out[key].(map[string]interface{})["y"].(float64)} 	               
-		}
-
-		*r = aux
-		return nil
-	} else {
-		return bsonErr
-	}
-}
 
 func (r LinearRing) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
@@ -199,66 +172,67 @@ func (r LinearRing) WKT() string {
 	return out
 }
 
-func (r LinearRing) JSON() string {
-	out := "["
+func (r LinearRing) AsArray() [][]float64 {
 
-	for i, point := range r {
-		if i == 0 {
-			out += point.JSON()
-		} else {
-			out += fmt.Sprintf(",%s", point.JSON())
-		}
+	out := [][]float64{}	
+	for _, point := range r {
+		out = append(out, point.AsArray())
 	}
-	out += fmt.Sprintf(",%s]", r[0].JSON())
+	out = append(out, r[0].AsArray())
 
 	return out
 }
 
-func Interface2LineString(a interface{}) (LineString, error) {
 
-	if reflect.TypeOf(a).Kind() != reflect.Slice {
-		return nil, errors.New("Wrong type for coordinates.")
+func (r LinearRing) GetBSON() (interface{}, error) {
+	return LinearRingView{"LinearRing", r.AsArray()}, nil
+}
+
+func (r *LinearRing) SetBSON(raw bson.Raw) error {
+	rView := LinearRingView{}
+	err := raw.Unmarshal(&rView)
+	if err != nil {
+		return err
 	}
 
-	s := reflect.ValueOf(a)
+	rout, err := Slice2LinearRing(rView.Coords)
+	*r = rout
 
-	if s.Len() < 3 {
+	return err
+}
+
+func Slice2LineString(ffSlice [][]float64) (LineString, error) {
+	if len(ffSlice) < 3 {
 		return nil, errors.New("LineString of wrong dimension. Should have at least 3 Points")
 	}
 
-	l := LineString{}
-	for i := 0; i < s.Len(); i++ {
-		point, err := Interface2Point(s.Index(i).Interface())
+	ls := LineString{}
+	for _, fSlice := range(ffSlice) {
+		point, err := Slice2Point(fSlice)
 		if err != nil {
 			return nil, err
 		}
-		l = append(l, *point)
+		ls = append(ls, *point)
 	}
 
-	return l, nil
+	return ls, nil
 }
 
-func Interface2LinearRing(a interface{}) (LinearRing, error) {
-	if reflect.TypeOf(a).Kind() != reflect.Slice {
-		return nil, errors.New("Wrong type for coordinates.")
-	}
-
-	s := reflect.ValueOf(a)
-
-	if s.Len() < 3 {
-		return nil, errors.New("LinearRing of wrong dimension. Should have at least 3 Points")
+func Slice2LinearRing(ffSlice [][]float64) (LinearRing, error) {
+	if len(ffSlice) < 3 {
+		return nil, errors.New("LineString of wrong dimension. Should have at least 3 Points")
 	}
 
 	r := LinearRing{}
-	for i := 0; i < s.Len()-1; i++ {
-		point, err := Interface2Point(s.Index(i).Interface())
+	for _, fSlice := range(ffSlice) {
+		point, err := Slice2Point(fSlice)
 		if err != nil {
 			return nil, err
 		}
 		r = append(r, *point)
 	}
 
-	return r, nil
+	return r[:len(r)-1], nil
 }
 
 func ExtractWKTLineString(in string) (LineString, error) {

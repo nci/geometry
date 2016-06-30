@@ -1,17 +1,21 @@
 package geometry
 
 import (
+	"gopkg.in/mgo.v2/bson"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 )
 
 type MultiPolygon []Polygon
+
+type MultiPolygonView struct {
+	Type  string  `json:"type" bson:"type"`
+	Coords [][][][]float64 `json:"coordinates" bson:"coordinates"`
+}
 
 func (m MultiPolygon) Equals(n MultiPolygon) bool {
 	for i, p := range(m) {
@@ -20,6 +24,16 @@ func (m MultiPolygon) Equals(n MultiPolygon) bool {
 		}
 	}
 	return true
+}
+
+func (m MultiPolygon) AsArray() [][][][]float64 {
+	out := [][][][]float64{}	
+	
+	for _, p := range m {
+		out = append(out, p.AsArray())
+	}
+
+	return out
 }
 
 func (m MultiPolygon) WKB(end binary.ByteOrder) []byte {
@@ -46,19 +60,6 @@ func (m MultiPolygon) WKT() string {
 	return out
 }
 
-func (m MultiPolygon) JSON() string {
-	out := "["
-
-	for i, poly := range m {
-		if i > 0 {
-			out += ","
-		}
-		out += poly.JSON()
-	}
-	out += "]"
-
-	return out
-}
 
 func (m MultiPolygon) MarshalWKB(mode uint8) []byte {
 	buf := new(bytes.Buffer)
@@ -110,34 +111,48 @@ func (m *MultiPolygon) UnmarshalWKT(in string) error {
 	return err
 }
 
-func (m MultiPolygon) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf(`{"type": "MultiPolygon", "coordinates":%s}`, m.JSON())), nil
+func (m MultiPolygon) GetBSON() (interface{}, error) {
+	return MultiPolygonView{"MultiPolygon", m.AsArray()}, nil
 }
 
-func (m *MultiPolygon) UnmarshalJSON(in []byte) error {
-	dict := make(map[string]interface{})
-	err := json.Unmarshal(in, &dict)
+func (m *MultiPolygon) SetBSON(raw bson.Raw) error {
+	mView := MultiPolygonView{}
+	err := raw.Unmarshal(&mView)
 	if err != nil {
 		return err
 	}
-	*m, err = Interface2MultiPolygon(dict["coordinates"])
+
+	mout, err := Slice2MultiPolygon(mView.Coords)
+	*m = mout
 
 	return err
 }
 
-func Interface2MultiPolygon(a interface{}) (MultiPolygon, error) {
-	if reflect.TypeOf(a).Kind() != reflect.Slice {
-		return nil, errors.New("Wrong type for coordinates for Multipolygon.")
-	}
+func (m MultiPolygon) MarshalJSON() ([]byte, error) {
+	mExp := MultiPolygonView{"MultiPolygon", m.AsArray()}
+	return json.Marshal(mExp)
+}
 
-	s := reflect.ValueOf(a)
+func (m *MultiPolygon) UnmarshalJSON(in []byte) error {
+	mView := MultiPolygonView{}
+	err := json.Unmarshal(in, &mView)
+
+	if err != nil {
+		return err
+	}
+	*m, err = Slice2MultiPolygon(mView.Coords)
+
+	return err
+}
+
+func Slice2MultiPolygon(ffffSlice [][][][]float64) (MultiPolygon, error) {
 	m := MultiPolygon{}
-	for i := 0; i < s.Len(); i++ {
-		p, err := Interface2Polygon(s.Index(i).Interface())
+	for _, fffSlice := range(ffffSlice) {
+		lr, err := Slice2Polygon(fffSlice)
 		if err != nil {
 			return nil, err
 		}
-		m = append(m, p)
+		m = append(m, lr)
 	}
 
 	return m, nil

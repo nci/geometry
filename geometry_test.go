@@ -3,7 +3,6 @@ package geometry
 import (
 	"gopkg.in/mgo.v2/bson"
 	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -14,6 +13,7 @@ func TestPointJSON(t *testing.T) {
 	if err != nil {
 		t.Errorf("JSON Point Test failed, error in JSON serialisation: %s", err)
 	}
+	
 	var pout Point
 	err = json.Unmarshal(out, &pout)
 
@@ -30,10 +30,9 @@ func TestPointBSON(t *testing.T) {
 	if err != nil {
 		t.Errorf("JSON Point Test failed, error in BSON serialisation: %s", err)
 	}
-	fmt.Println("Marshal", out, err)
+
 	var pout Point
 	err = bson.Unmarshal(out, &pout)
-	fmt.Println("Unmarshal", pout, err)
 
 	if !pout.Equals(p) {
 		t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
@@ -83,11 +82,11 @@ func TestLinearRingBSON(t *testing.T) {
 	}
 	var lsout LinearRing
 	err = bson.Unmarshal(out, &lsout)
-	fmt.Println(lsout, err)
 	if !lsout.Equals(ls) {
 		t.Errorf("JSON LineString Test failed, expected: %+v, got: %+v", ls, lsout)
 	}
 }
+
 func TestLineStringJSON(t *testing.T) {
 	p1 := Point{4.0, 9.5}
 	p2 := Point{2.0, 9.5}
@@ -222,6 +221,30 @@ func TestMultiPolygonJSON(t *testing.T) {
 	
 	if !mout.Equals(m) {
 		t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
+	}
+}
+
+func TestMultiPolygonBSON(t *testing.T) {
+	p1 := Point{4.0, 9.5}
+	p2 := Point{2.0, 9.5}
+	p3 := Point{4.0, 5.5}
+	p4 := Point{8.0, 9.5}
+	p5 := Point{6.0, 9.5}
+	p6 := Point{8.0, 5.5}
+	m := MultiPolygon{Polygon{LinearRing{p1, p2, p3}}, Polygon{LinearRing{p4, p5, p6}}}
+
+	out, err := bson.Marshal(m)
+	if err != nil {
+		t.Errorf("BSON MultiPolygon Test failed, error in JSON serialisation: %s", err)
+	}
+	var mout MultiPolygon
+	err = bson.Unmarshal(out, &mout)
+	if err != nil {
+		t.Errorf("JSON MultiPolygon Test failed, error in JSON deserialisation: %s", err)
+	}
+	
+	if !mout.Equals(m) {
+		t.Errorf("BSON MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
 	}
 }
 

@@ -1,17 +1,21 @@
 package geometry
 
 import (
+	"gopkg.in/mgo.v2/bson"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 )
 
 type Polygon []LinearRing
+
+type PolygonView struct {
+	Type  string  `json:"type" bson:"type"`
+	Coords [][][]float64 `json:"coordinates" bson:"coordinates"`
+}
 
 func (p Polygon) Equals(q Polygon) bool {
 	for i, lr := range(p) {
@@ -20,6 +24,16 @@ func (p Polygon) Equals(q Polygon) bool {
 		}
 	}
 	return true
+}
+
+func (p Polygon) AsArray() [][][]float64 {
+	out := [][][]float64{}	
+	
+	for _, lr := range p {
+		out = append(out, lr.AsArray())
+	}
+
+	return out
 }
 
 func (p Polygon) WKB(end binary.ByteOrder) []byte {
@@ -59,21 +73,6 @@ func (p Polygon) WKT() string {
 	return out
 }
 
-func (p Polygon) JSON() string {
-	out := "["
-
-	for i, ring := range p {
-		if i == 0 {
-			out += ring.JSON()
-		} else {
-			out += fmt.Sprintf(",%s", ring.JSON())
-		}
-	}
-	out += "]"
-
-	return out
-}
-
 func (p Polygon) MarshalWKB(mode uint8) []byte {
 	buf := new(bytes.Buffer)
 
@@ -108,36 +107,48 @@ func (p *Polygon) UnmarshalWKT(in string) error {
 	return err
 }
 
-func (p Polygon) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf(`{"type": "Polygon", "coordinates":%s}`, p.JSON())), nil
+func (p Polygon) GetBSON() (interface{}, error) {
+	return PolygonView{"Polygon", p.AsArray()}, nil
 }
 
-func (p *Polygon) UnmarshalJSON(in []byte) error {
-	dict := make(map[string]interface{})
-	err := json.Unmarshal(in, &dict)
-
+func (p *Polygon) SetBSON(raw bson.Raw) error {
+	pView := PolygonView{}
+	err := raw.Unmarshal(&pView)
 	if err != nil {
 		return err
 	}
-	*p, err = Interface2Polygon(dict["coordinates"])
+
+	pout, err := Slice2Polygon(pView.Coords)
+	*p = pout
 
 	return err
 }
 
-func Interface2Polygon(a interface{}) (Polygon, error) {
-	if reflect.TypeOf(a).Kind() != reflect.Slice {
-		return nil, errors.New("Wrong type for coordinates for Polygon.")
+func (p Polygon) MarshalJSON() ([]byte, error) {
+	pView := PolygonView{"Polygon", p.AsArray()}
+	return json.Marshal(pView)
+}
+
+func (p *Polygon) UnmarshalJSON(in []byte) error {
+	pView := PolygonView{}
+	err := json.Unmarshal(in, &pView)
+
+	if err != nil {
+		return err
 	}
+	*p, err = Slice2Polygon(pView.Coords)
 
-	s := reflect.ValueOf(a)
+	return err
+}
 
+func Slice2Polygon(fffSlice [][][]float64) (Polygon, error) {
 	p := Polygon{}
-	for i := 0; i < s.Len(); i++ {
-		ring, err := Interface2LinearRing(s.Index(i).Interface())
+	for _, ffSlice := range(fffSlice) {
+		lr, err := Slice2LinearRing(ffSlice)
 		if err != nil {
 			return nil, err
 		}
-		p = append(p, ring)
+		p = append(p, lr)
 	}
 
 	return p, nil

@@ -7,15 +7,26 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
+
+type Geometry interface {
+	WKT() string
+	WKB(binary.ByteOrder) []byte
+	JSON() string
+}
+
 type Point struct {
 	X float64
 	Y float64
+}
+
+type PointView struct {
+	Type  string  `json:"type" bson:"type"`
+	Coords []float64 `json:"coordinates" bson:"coordinates"`
 }
 
 func (p Point) Equals(q Point) bool {
@@ -25,23 +36,29 @@ func (p Point) Equals(q Point) bool {
 	return false
 }
 
+func (p Point) AsArray() []float64 {
+	return []float64{p.X, p.Y}
+}
+
 var endian map[uint8]binary.ByteOrder = map[uint8]binary.ByteOrder{0: binary.BigEndian, 1: binary.LittleEndian}
 
 // GetBSON implements bson.Getter.
 func (p Point) GetBSON() (interface{}, error) {
-	return []float64{p.X, p.Y}, nil
+	return PointView{"Point", p.AsArray()}, nil
 }
 
 // SetBSON implements bson.Setter.
 func (p *Point) SetBSON(raw bson.Raw) error {
-	out := make(map[string]interface{})
-	bsonErr := raw.Unmarshal(&out)
-	if bsonErr == nil {
-		*p = Point{X: out["0"].(float64), Y: out["1"].(float64)}
-		return nil
-	} else {
-		return bsonErr
+	pView := PointView{}
+	err := raw.Unmarshal(&pView)
+	if err != nil {
+		return err
 	}
+
+	pout, err := Slice2Point(pView.Coords)
+	*p = *pout
+
+	return err
 }
 
 func (p Point) WKB(end binary.ByteOrder) []byte {
@@ -54,9 +71,6 @@ func (p Point) WKT() string {
 	return fmt.Sprintf("%g%s%g", p.X, " ", p.Y)
 }
 
-func (p Point) JSON() string {
-	return fmt.Sprintf("%s%g%s%g%s", "[", p.X, ",", p.Y, "]")
-}
 
 func (p Point) MarshalWKB(mode uint8) []byte {
 	buf := new(bytes.Buffer)
@@ -108,36 +122,29 @@ func (p *Point) UnmarshalWKT(in string) error {
 }
 
 func (p Point) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf(`{"type": "Point", "coordinates": %s}`, p.JSON())), nil
+	pView := PointView{"Point", p.AsArray()}
+	return json.Marshal(pView)
 }
 
 func (p *Point) UnmarshalJSON(in []byte) error {
-	dict := make(map[string]interface{})
-	err := json.Unmarshal(in, &dict)
-
+	pView := PointView{}
+	err := json.Unmarshal(in, &pView)
 	if err != nil {
 		return err
 	}
 
-	pt, err := Interface2Point(dict["coordinates"])
-	*p = *pt
+	pout, err := Slice2Point(pView.Coords)
+	*p = *pout
 
 	return err
 }
 
-func Interface2Point(a interface{}) (*Point, error) {
-	if reflect.TypeOf(a).Kind() != reflect.Slice {
-		return nil, errors.New("Wrong type for coordinates.")
+func Slice2Point(fSlice []float64) (*Point, error) {
+	if len(fSlice) != 2 {
+		return nil, errors.New("Wrong size of slice for Point")
 	}
 
-	s := reflect.ValueOf(a)
-
-	if s.Len() != 2 {
-		return nil, errors.New("Point of wrong dimension")
-	}
-
-	return &Point{s.Index(0).Interface().(float64), s.Index(1).Interface().(float64)}, nil
-
+	return &Point{X: fSlice[0], Y: fSlice[1]}, nil
 }
 
 func ExtractWKBPoint(buf *bytes.Buffer, end binary.ByteOrder) (*Point, error) {
