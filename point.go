@@ -16,12 +16,18 @@ import (
 type Geometry interface {
 	WKT() string
 	WKB(binary.ByteOrder) []byte
-	JSON() string
+        MarshalWKB(uint8) []byte
+        UnmarshalWKB([]byte) error
+	MarshalWKT() string
+	UnmarshalWKT(string) error
+	MarshalJSON() ([]byte, error)
+	UnmarshalJSON([]byte) error
 }
 
 type Point struct {
 	X float64
 	Y float64
+	Z float64
 }
 
 type PointView struct {
@@ -29,15 +35,15 @@ type PointView struct {
 	Coords []float64 `json:"coordinates" bson:"coordinates"`
 }
 
-func (p Point) Equals(q Point) bool {
-	if p == q {
+func (p *Point) Equals(q Point) bool {
+	if *p == q {
 		return true
 	}
 	return false
 }
 
 func (p Point) AsArray() []float64 {
-	return []float64{p.X, p.Y}
+	return []float64{p.X, p.Y, p.Z}
 }
 
 var endian map[uint8]binary.ByteOrder = map[uint8]binary.ByteOrder{0: binary.BigEndian, 1: binary.LittleEndian}
@@ -61,18 +67,18 @@ func (p *Point) SetBSON(raw bson.Raw) error {
 	return err
 }
 
-func (p Point) WKB(end binary.ByteOrder) []byte {
+func (p *Point) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, end, &p)
+	binary.Write(buf, end, p)
 	return buf.Bytes()
 }
 
-func (p Point) WKT() string {
+func (p *Point) WKT() string {
 	return fmt.Sprintf("%g%s%g", p.X, " ", p.Y)
 }
 
 
-func (p Point) MarshalWKB(mode uint8) []byte {
+func (p *Point) MarshalWKB(mode uint8) []byte {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, endian[mode], &mode)
 
@@ -94,6 +100,8 @@ func (p *Point) UnmarshalWKB(in []byte) error {
 		return fmt.Errorf("Error reading geometry: %s", err)
 	}
 
+	fmt.Println(buf.String())
+
 	var wkbType uint32
 	err = binary.Read(buf, endian[end], &wkbType)
 	if err != nil || wkbType != 1 {
@@ -101,12 +109,12 @@ func (p *Point) UnmarshalWKB(in []byte) error {
 	}
 
 	point, err := ExtractWKBPoint(buf, endian[end])
-	*p = *point
+	p = point
 
 	return err
 }
 
-func (p Point) MarshalWKT() string {
+func (p *Point) MarshalWKT() string {
 	return fmt.Sprintf("POINT (%s)", p.WKT())
 }
 
@@ -121,7 +129,7 @@ func (p *Point) UnmarshalWKT(in string) error {
 	return err
 }
 
-func (p Point) MarshalJSON() ([]byte, error) {
+func (p *Point) MarshalJSON() ([]byte, error) {
 	pView := PointView{"Point", p.AsArray()}
 	return json.Marshal(pView)
 }
@@ -140,26 +148,27 @@ func (p *Point) UnmarshalJSON(in []byte) error {
 }
 
 func Slice2Point(fSlice []float64) (*Point, error) {
-	if len(fSlice) != 2 {
+	switch len(fSlice) {
+	case 2:
+		return &Point{X: fSlice[0], Y: fSlice[1]}, nil
+	case 3:
+		return &Point{X: fSlice[0], Y: fSlice[1], Z: fSlice[2]}, nil
+	default:
 		return nil, errors.New("Wrong size of slice for Point")
 	}
-
-	return &Point{X: fSlice[0], Y: fSlice[1]}, nil
 }
 
 func ExtractWKBPoint(buf *bytes.Buffer, end binary.ByteOrder) (*Point, error) {
 	var X, Y float64
-	//err := binary.Read(buf, binary.BigEndian, &X)
 	err := binary.Read(buf, end, &X)
 	if err != nil {
 		return nil, fmt.Errorf("Error reading: %s", err)
 	}
-	//err = binary.Read(buf, binary.BigEndian, &Y)
 	err = binary.Read(buf, end, &Y)
 	if err != nil {
 		return nil, fmt.Errorf("Error reading: %s", err)
 	}
-	return &Point{X, Y}, nil
+	return &Point{X, Y, 0}, nil
 }
 
 func ExtractWKTPoint(in string) (*Point, error) {
@@ -177,5 +186,5 @@ func ExtractWKTPoint(in string) (*Point, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Point{X, Y}, nil
+	return &Point{X, Y, 0}, nil
 }
