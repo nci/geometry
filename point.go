@@ -1,23 +1,22 @@
 package geometry
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/mgo.v2/bson"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-
 type Geometry interface {
 	WKT() string
 	WKB(binary.ByteOrder) []byte
-        MarshalWKB(uint8) []byte
-        UnmarshalWKB([]byte) error
+	MarshalWKB(uint8) []byte
+	UnmarshalWKB([]byte) error
 	MarshalWKT() string
 	UnmarshalWKT(string) error
 	MarshalJSON() ([]byte, error)
@@ -31,7 +30,7 @@ type Point struct {
 }
 
 type PointView struct {
-	Type  string  `json:"type" bson:"type"`
+	Type   string    `json:"type" bson:"type"`
 	Coords []float64 `json:"coordinates" bson:"coordinates"`
 }
 
@@ -42,14 +41,14 @@ func (p *Point) Equals(q Point) bool {
 	return false
 }
 
-func (p Point) AsArray() []float64 {
+func (p *Point) AsArray() []float64 {
 	return []float64{p.X, p.Y, p.Z}
 }
 
 var endian map[uint8]binary.ByteOrder = map[uint8]binary.ByteOrder{0: binary.BigEndian, 1: binary.LittleEndian}
 
 // GetBSON implements bson.Getter.
-func (p Point) GetBSON() (interface{}, error) {
+func (p *Point) GetBSON() (interface{}, error) {
 	return PointView{"Point", p.AsArray()}, nil
 }
 
@@ -69,14 +68,13 @@ func (p *Point) SetBSON(raw bson.Raw) error {
 
 func (p *Point) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, end, p)
+	binary.Write(buf, end, *p)
 	return buf.Bytes()
 }
 
 func (p *Point) WKT() string {
 	return fmt.Sprintf("%g%s%g", p.X, " ", p.Y)
 }
-
 
 func (p *Point) MarshalWKB(mode uint8) []byte {
 	buf := new(bytes.Buffer)
@@ -100,8 +98,6 @@ func (p *Point) UnmarshalWKB(in []byte) error {
 		return fmt.Errorf("Error reading geometry: %s", err)
 	}
 
-	fmt.Println(buf.String())
-
 	var wkbType uint32
 	err = binary.Read(buf, endian[end], &wkbType)
 	if err != nil || wkbType != 1 {
@@ -109,7 +105,7 @@ func (p *Point) UnmarshalWKB(in []byte) error {
 	}
 
 	point, err := ExtractWKBPoint(buf, endian[end])
-	p = point
+	*p = *point
 
 	return err
 }
@@ -159,7 +155,7 @@ func Slice2Point(fSlice []float64) (*Point, error) {
 }
 
 func ExtractWKBPoint(buf *bytes.Buffer, end binary.ByteOrder) (*Point, error) {
-	var X, Y float64
+	var X, Y, Z float64
 	err := binary.Read(buf, end, &X)
 	if err != nil {
 		return nil, fmt.Errorf("Error reading: %s", err)
@@ -168,7 +164,11 @@ func ExtractWKBPoint(buf *bytes.Buffer, end binary.ByteOrder) (*Point, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error reading: %s", err)
 	}
-	return &Point{X, Y, 0}, nil
+	err = binary.Read(buf, end, &Z)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading: %s", err)
+	}
+	return &Point{X, Y, Z}, nil
 }
 
 func ExtractWKTPoint(in string) (*Point, error) {
