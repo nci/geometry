@@ -1,11 +1,11 @@
 package geometry
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"gopkg.in/mgo.v2/bson"
 	"regexp"
 	"strings"
 )
@@ -13,12 +13,12 @@ import (
 type Polygon []LinearRing
 
 type PolygonView struct {
-	Type  string  `json:"type" bson:"type"`
+	Type   string        `json:"type" bson:"type"`
 	Coords [][][]float64 `json:"coordinates" bson:"coordinates"`
 }
 
 func (p Polygon) Equals(q Polygon) bool {
-	for i, lr := range(p) {
+	for i, lr := range p {
 		if !lr.Equals(q[i]) {
 			return false
 		}
@@ -26,17 +26,17 @@ func (p Polygon) Equals(q Polygon) bool {
 	return true
 }
 
-func (p Polygon) AsArray() [][][]float64 {
-	out := [][][]float64{}	
-	
-	for _, lr := range p {
+func (p *Polygon) AsArray() [][][]float64 {
+	out := [][][]float64{}
+
+	for _, lr := range *p {
 		out = append(out, lr.AsArray())
 	}
 
 	return out
 }
 
-func (p Polygon) WKB(end binary.ByteOrder) []byte {
+func (p *Polygon) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
 	var enc uint8
 	if end == binary.BigEndian {
@@ -50,18 +50,18 @@ func (p Polygon) WKB(end binary.ByteOrder) []byte {
 	pId := uint32(3)
 	binary.Write(buf, end, &pId)
 
-	numRings := uint32(len(p))
+	numRings := uint32(len(*p))
 	binary.Write(buf, end, &numRings)
-	for _, lr := range p {
+	for _, lr := range *p {
 		binary.Write(buf, end, lr.WKB(end))
 	}
 	return buf.Bytes()
 }
 
-func (p Polygon) WKT() string {
+func (p *Polygon) WKT() string {
 	out := "("
 
-	for i, ring := range p {
+	for i, ring := range *p {
 		if i == 0 {
 			out += ring.WKT()
 		} else {
@@ -73,7 +73,7 @@ func (p Polygon) WKT() string {
 	return out
 }
 
-func (p Polygon) MarshalWKB(mode uint8) []byte {
+func (p *Polygon) MarshalWKB(mode uint8) []byte {
 	buf := new(bytes.Buffer)
 
 	enc := p.WKB(endian[mode])
@@ -91,7 +91,7 @@ func (p *Polygon) UnmarshalWKB(in []byte) error {
 	return err
 }
 
-func (p Polygon) MarshalWKT() string {
+func (p *Polygon) MarshalWKT() string {
 	return fmt.Sprintf("POLYGON %s", p.WKT())
 }
 
@@ -107,7 +107,7 @@ func (p *Polygon) UnmarshalWKT(in string) error {
 	return err
 }
 
-func (p Polygon) GetBSON() (interface{}, error) {
+func (p *Polygon) GetBSON() (interface{}, error) {
 	return PolygonView{"Polygon", p.AsArray()}, nil
 }
 
@@ -124,12 +124,14 @@ func (p *Polygon) SetBSON(raw bson.Raw) error {
 	return err
 }
 
-func (p Polygon) MarshalJSON() ([]byte, error) {
+func (p *Polygon) MarshalJSON() ([]byte, error) {
 	pView := PolygonView{"Polygon", p.AsArray()}
 	return json.Marshal(pView)
 }
 
 func (p *Polygon) UnmarshalJSON(in []byte) error {
+	fmt.Println(string(in))
+	fmt.Println("HHHH")
 	pView := PolygonView{}
 	err := json.Unmarshal(in, &pView)
 
@@ -143,7 +145,7 @@ func (p *Polygon) UnmarshalJSON(in []byte) error {
 
 func Slice2Polygon(fffSlice [][][]float64) (Polygon, error) {
 	p := Polygon{}
-	for _, ffSlice := range(fffSlice) {
+	for _, ffSlice := range fffSlice {
 		lr, err := Slice2LinearRing(ffSlice)
 		if err != nil {
 			return nil, err
