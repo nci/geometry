@@ -130,8 +130,6 @@ func (p *Polygon) MarshalJSON() ([]byte, error) {
 }
 
 func (p *Polygon) UnmarshalJSON(in []byte) error {
-	fmt.Println(string(in))
-	fmt.Println("HHHH")
 	pView := PolygonView{}
 	err := json.Unmarshal(in, &pView)
 

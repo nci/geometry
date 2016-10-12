@@ -290,3 +290,69 @@ func TestMultiPolygonWKB(t *testing.T) {
 		t.Errorf("WKT MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
 	}
 }
+
+func TestFeaturePoint(t *testing.T) {
+	p := Point{X: 4.0, Y: 9.5}
+	f := Feature{Type:"Feature",Geometry:&p}
+
+	out, err := json.Marshal(f)
+	if err != nil {
+		t.Errorf("GeoJSON Feature Point Test failed, error in JSON serialisation: %s", err)
+	}
+	var fout Feature
+	err = json.Unmarshal(out, &fout)
+	if err != nil {
+		t.Errorf("GeoJSON Feature Point Test failed, error in JSON deserialisation: %s", err)
+	}
+
+	out2, err := json.Marshal(fout)
+	if string(out2) != string(out) {
+		t.Errorf("GeoJSON Feature Point Test failed, expected: %+v, got: %+v", f, fout)
+	}
+}
+
+func TestFeatureLineString(t *testing.T) {
+	p1 := Point{X: 4.0, Y: 9.5}
+	p2 := Point{X: 2.0, Y: 9.5}
+	p3 := Point{X: 4.0, Y: 5.5}
+	ls := LineString{p1, p2, p3}
+	f := Feature{Type:"Feature",Geometry:&ls}
+
+	out, err := json.Marshal(f)
+	if err != nil {
+		t.Errorf("GeoJSON Feature Line String Test failed, error in JSON serialisation: %s", err)
+	}
+	var fout Feature
+	err = json.Unmarshal(out, &fout)
+	if err != nil {
+		t.Errorf("GeoJSON Feature Line String Test failed, error in JSON deserialisation: %s", err)
+	}
+
+	out2, err := json.Marshal(fout)
+	if string(out2) != string(out) {
+		t.Errorf("GeoJSON Feature Line String Test failed, expected: %+v, got: %+v", f, fout)
+	}
+}
+
+func TestFeaturePolygonGeoJSON(t *testing.T) {
+	p1 := Point{X: 4.0, Y: 9.5}
+	p2 := Point{X: 2.0, Y: 9.5}
+	p3 := Point{X: 4.0, Y: 5.5}
+	p := Polygon{LinearRing{p1, p2, p3}}
+	f := Feature{Type:"Feature",Geometry:&p}
+
+	out, err := json.Marshal(f)
+	if err != nil {
+		t.Errorf("GeoJSON Feature Polygon Test failed, error in JSON serialisation: %s", err)
+	}
+	var fout Feature
+	err = json.Unmarshal(out, &fout)
+	if err != nil {
+		t.Errorf("GeoJSON Feature Polygon Test failed, error in JSON deserialisation: %s", err)
+	}
+
+	out2, err := json.Marshal(fout)
+	if string(out2) != string(out) {
+		t.Errorf("GeoJSON Feature Polygon Test failed, expected: %+v, got: %+v", f, fout)
+	}
+}

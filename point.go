@@ -12,17 +12,6 @@ import (
 	"strings"
 )
 
-type Geometry interface {
-	WKT() string
-	WKB(binary.ByteOrder) []byte
-	MarshalWKB(uint8) []byte
-	UnmarshalWKB([]byte) error
-	MarshalWKT() string
-	UnmarshalWKT(string) error
-	MarshalJSON() ([]byte, error)
-	UnmarshalJSON([]byte) error
-}
-
 type Point struct {
 	X float64
 	Y float64
