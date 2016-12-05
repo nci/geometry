@@ -18,12 +18,12 @@ type Geometry interface {
 }
 
 type TypeExtractor struct {
-	Type     string       `json:"type"`
+	Type     string           `json:"type"`
 	Geometry *json.RawMessage `json:"geometry"`
 }
 
 type Feature struct {
-	Type     string       `json:"type"`
+	Type     string   `json:"type"`
 	Geometry Geometry `json:"geometry"`
 }
 
@@ -38,7 +38,7 @@ func (f *Feature) UnmarshalJSON(in []byte) error {
 	if err != nil {
 		return err
 	}
-	
+
 	geomType := TypeExtractor{}
 	err = json.Unmarshal(*featType.Geometry, &geomType)
 	if err != nil {
@@ -52,23 +52,23 @@ func (f *Feature) UnmarshalJSON(in []byte) error {
 		if err != nil {
 			return err
 		}
-		*f = Feature{Type:"Feature", Geometry: &point}
-	
+		*f = Feature{Type: "Feature", Geometry: &point}
+
 	case "LineString":
 		var ls LineString
 		err = json.Unmarshal(*featType.Geometry, &ls)
 		if err != nil {
 			return err
 		}
-		*f = Feature{Type:"Feature", Geometry: &ls}
-		
+		*f = Feature{Type: "Feature", Geometry: &ls}
+
 	case "Polygon":
 		var poly Polygon
 		err = json.Unmarshal(*featType.Geometry, &poly)
 		if err != nil {
 			return err
 		}
-		*f = Feature{Type:"Feature", Geometry: &poly}
+		*f = Feature{Type: "Feature", Geometry: &poly}
 	default:
 		return fmt.Errorf("json Unmarshal Feature: Geometry %s not recognised", string(*featType.Geometry))
 	}

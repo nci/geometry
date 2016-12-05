@@ -1,7 +1,6 @@
 package geometry
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
@@ -13,12 +12,12 @@ import (
 type MultiPolygon []Polygon
 
 type MultiPolygonView struct {
-	Type  string  `json:"type" bson:"type"`
+	Type   string          `json:"type" bson:"type"`
 	Coords [][][][]float64 `json:"coordinates" bson:"coordinates"`
 }
 
 func (m MultiPolygon) Equals(n MultiPolygon) bool {
-	for i, p := range(m) {
+	for i, p := range m {
 		if !p.Equals(n[i]) {
 			return false
 		}
@@ -27,8 +26,8 @@ func (m MultiPolygon) Equals(n MultiPolygon) bool {
 }
 
 func (m MultiPolygon) AsArray() [][][][]float64 {
-	out := [][][][]float64{}	
-	
+	out := [][][][]float64{}
+
 	for _, p := range m {
 		out = append(out, p.AsArray())
 	}
@@ -59,7 +58,6 @@ func (m MultiPolygon) WKT() string {
 
 	return out
 }
-
 
 func (m MultiPolygon) MarshalWKB(mode uint8) []byte {
 	buf := new(bytes.Buffer)
@@ -111,6 +109,7 @@ func (m *MultiPolygon) UnmarshalWKT(in string) error {
 	return err
 }
 
+/*
 func (m MultiPolygon) GetBSON() (interface{}, error) {
 	return MultiPolygonView{"MultiPolygon", m.AsArray()}, nil
 }
@@ -127,6 +126,7 @@ func (m *MultiPolygon) SetBSON(raw bson.Raw) error {
 
 	return err
 }
+*/
 
 func (m MultiPolygon) MarshalJSON() ([]byte, error) {
 	mExp := MultiPolygonView{"MultiPolygon", m.AsArray()}
@@ -147,7 +147,7 @@ func (m *MultiPolygon) UnmarshalJSON(in []byte) error {
 
 func Slice2MultiPolygon(ffffSlice [][][][]float64) (MultiPolygon, error) {
 	m := MultiPolygon{}
-	for _, fffSlice := range(ffffSlice) {
+	for _, fffSlice := range ffffSlice {
 		lr, err := Slice2Polygon(fffSlice)
 		if err != nil {
 			return nil, err

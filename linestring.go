@@ -1,7 +1,6 @@
 package geometry
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
@@ -14,12 +13,12 @@ import (
 type LineString []Point
 
 type LineStringView struct {
-	Type  string  `json:"type" bson:"type"`
+	Type   string      `json:"type" bson:"type"`
 	Coords [][]float64 `json:"coordinates" bson:"coordinates"`
 }
 
 func (l LineString) Equals(ls LineString) bool {
-	for i, point := range(l) {
+	for i, point := range l {
 		if !point.Equals(ls[i]) {
 			return false
 		}
@@ -53,8 +52,8 @@ func (l LineString) WKT() string {
 }
 
 func (r LineString) AsArray() [][]float64 {
-	out := [][]float64{}	
-	
+	out := [][]float64{}
+
 	for _, point := range r {
 		out = append(out, point.AsArray())
 	}
@@ -132,19 +131,18 @@ func (l *LineString) UnmarshalJSON(in []byte) error {
 type LinearRing []Point
 
 type LinearRingView struct {
-	Type  string  `json:"type" bson:"type"`
+	Type   string      `json:"type" bson:"type"`
 	Coords [][]float64 `json:"coordinates" bson:"coordinates"`
 }
 
 func (r LinearRing) Equals(lr LinearRing) bool {
-	for i, point := range(r) {
+	for i, point := range r {
 		if !point.Equals(lr[i]) {
 			return false
 		}
 	}
 	return true
 }
-
 
 func (r LinearRing) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
@@ -174,7 +172,7 @@ func (r LinearRing) WKT() string {
 
 func (r LinearRing) AsArray() [][]float64 {
 
-	out := [][]float64{}	
+	out := [][]float64{}
 	for _, point := range r {
 		out = append(out, point.AsArray())
 	}
@@ -183,7 +181,7 @@ func (r LinearRing) AsArray() [][]float64 {
 	return out
 }
 
-
+/*
 func (r LinearRing) GetBSON() (interface{}, error) {
 	return LinearRingView{"LinearRing", r.AsArray()}, nil
 }
@@ -200,6 +198,7 @@ func (r *LinearRing) SetBSON(raw bson.Raw) error {
 
 	return err
 }
+*/
 
 func Slice2LineString(ffSlice [][]float64) (LineString, error) {
 	if len(ffSlice) < 3 {
@@ -207,7 +206,7 @@ func Slice2LineString(ffSlice [][]float64) (LineString, error) {
 	}
 
 	ls := LineString{}
-	for _, fSlice := range(ffSlice) {
+	for _, fSlice := range ffSlice {
 		point, err := Slice2Point(fSlice)
 		if err != nil {
 			return nil, err
@@ -224,7 +223,7 @@ func Slice2LinearRing(ffSlice [][]float64) (LinearRing, error) {
 	}
 
 	r := LinearRing{}
-	for _, fSlice := range(ffSlice) {
+	for _, fSlice := range ffSlice {
 		point, err := Slice2Point(fSlice)
 		if err != nil {
 			return nil, err

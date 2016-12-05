@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/mgo.v2/bson"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,6 +35,7 @@ func (p *Point) AsArray() []float64 {
 
 var endian map[uint8]binary.ByteOrder = map[uint8]binary.ByteOrder{0: binary.BigEndian, 1: binary.LittleEndian}
 
+/*
 // GetBSON implements bson.Getter.
 func (p *Point) GetBSON() (interface{}, error) {
 	return PointView{"Point", p.AsArray()}, nil
@@ -54,6 +54,7 @@ func (p *Point) SetBSON(raw bson.Raw) error {
 
 	return err
 }
+*/
 
 func (p *Point) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)

@@ -2,7 +2,6 @@ package geometry
 
 import (
 	"encoding/json"
-	"gopkg.in/mgo.v2/bson"
 	"testing"
 )
 
@@ -22,6 +21,7 @@ func TestPointJSON(t *testing.T) {
 	}
 }
 
+/*
 func TestPointBSON(t *testing.T) {
 	p := Point{X: 4.0, Y: 9.5}
 
@@ -37,6 +37,7 @@ func TestPointBSON(t *testing.T) {
 		t.Errorf("JSON Point Test failed, expected: %+v, got: %+v", p, pout)
 	}
 }
+*/
 
 func TestPointWKT(t *testing.T) {
 	p := &Point{X: 4.0, Y: 9.5}
@@ -69,6 +70,7 @@ func TestPointWKB(t *testing.T) {
 	}
 }
 
+/*
 func TestLinearRingBSON(t *testing.T) {
 	p1 := Point{X: 4.0, Y: 9.5}
 	p2 := Point{X: 2.0, Y: 9.5}
@@ -85,6 +87,7 @@ func TestLinearRingBSON(t *testing.T) {
 		t.Errorf("BSON LineString Test failed, expected: %+v, got: %+v", ls, lsout)
 	}
 }
+*/
 
 func TestLineStringJSON(t *testing.T) {
 	p1 := Point{X: 4.0, Y: 9.5}
@@ -223,6 +226,7 @@ func TestMultiPolygonJSON(t *testing.T) {
 	}
 }
 
+/*
 func TestMultiPolygonBSON(t *testing.T) {
 	p1 := Point{X: 4.0, Y: 9.5}
 	p2 := Point{X: 2.0, Y: 9.5}
@@ -246,6 +250,7 @@ func TestMultiPolygonBSON(t *testing.T) {
 		t.Errorf("BSON MultiPolygon Test failed, expected: %+v, got: %+v", m, mout)
 	}
 }
+*/
 
 func TestMultiPolygonWKT(t *testing.T) {
 	p1 := Point{X: 4.0, Y: 9.5}
@@ -293,7 +298,7 @@ func TestMultiPolygonWKB(t *testing.T) {
 
 func TestFeaturePoint(t *testing.T) {
 	p := Point{X: 4.0, Y: 9.5}
-	f := Feature{Type:"Feature",Geometry:&p}
+	f := Feature{Type: "Feature", Geometry: &p}
 
 	out, err := json.Marshal(f)
 	if err != nil {
@@ -316,7 +321,7 @@ func TestFeatureLineString(t *testing.T) {
 	p2 := Point{X: 2.0, Y: 9.5}
 	p3 := Point{X: 4.0, Y: 5.5}
 	ls := LineString{p1, p2, p3}
-	f := Feature{Type:"Feature",Geometry:&ls}
+	f := Feature{Type: "Feature", Geometry: &ls}
 
 	out, err := json.Marshal(f)
 	if err != nil {
@@ -339,7 +344,7 @@ func TestFeaturePolygonGeoJSON(t *testing.T) {
 	p2 := Point{X: 2.0, Y: 9.5}
 	p3 := Point{X: 4.0, Y: 5.5}
 	p := Polygon{LinearRing{p1, p2, p3}}
-	f := Feature{Type:"Feature",Geometry:&p}
+	f := Feature{Type: "Feature", Geometry: &p}
 
 	out, err := json.Marshal(f)
 	if err != nil {

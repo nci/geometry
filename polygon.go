@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/mgo.v2/bson"
 	"regexp"
 	"strings"
 )
@@ -107,6 +106,7 @@ func (p *Polygon) UnmarshalWKT(in string) error {
 	return err
 }
 
+/*
 func (p *Polygon) GetBSON() (interface{}, error) {
 	return PolygonView{"Polygon", p.AsArray()}, nil
 }
@@ -123,6 +123,7 @@ func (p *Polygon) SetBSON(raw bson.Raw) error {
 
 	return err
 }
+*/
 
 func (p *Polygon) MarshalJSON() ([]byte, error) {
 	pView := PolygonView{"Polygon", p.AsArray()}
