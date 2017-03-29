@@ -361,3 +361,29 @@ func TestFeaturePolygonGeoJSON(t *testing.T) {
 		t.Errorf("GeoJSON Feature Polygon Test failed, expected: %+v, got: %+v", f, fout)
 	}
 }
+
+func TestFeatureMultiPolygonGeoJSON(t *testing.T) {
+	p1 := Point{X: 4.0, Y: 9.5}
+	p2 := Point{X: 2.0, Y: 9.5}
+	p3 := Point{X: 4.0, Y: 5.5}
+	p4 := Point{X: 8.0, Y: 9.5}
+	p5 := Point{X: 6.0, Y: 9.5}
+	p6 := Point{X: 8.0, Y: 5.5}
+	m := MultiPolygon{Polygon{LinearRing{p1, p2, p3}}, Polygon{LinearRing{p4, p5, p6}}}
+	f := Feature{Type: "Feature", Geometry: &m}
+
+	out, err := json.Marshal(f)
+	if err != nil {
+		t.Errorf("GeoJSON Feature MultiPolygon Test failed, error in JSON serialisation: %s", err)
+	}
+	var fout Feature
+	err = json.Unmarshal(out, &fout)
+	if err != nil {
+		t.Errorf("GeoJSON Feature MultiPolygon Test failed, error in JSON deserialisation: %s", err)
+	}
+
+	out2, err := json.Marshal(fout)
+	if string(out2) != string(out) {
+		t.Errorf("GeoJSON Feature Polygon Test failed, expected: %+v, got: %+v", f, fout)
+	}
+}

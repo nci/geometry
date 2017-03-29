@@ -69,6 +69,13 @@ func (f *Feature) UnmarshalJSON(in []byte) error {
 			return err
 		}
 		*f = Feature{Type: "Feature", Geometry: &poly}
+	case "MultiPolygon":
+		var mpoly MultiPolygon
+		err = json.Unmarshal(*featType.Geometry, &mpoly)
+		if err != nil {
+			return err
+		}
+		*f = Feature{Type: "Feature", Geometry: &mpoly}
 	default:
 		return fmt.Errorf("json Unmarshal Feature: Geometry %s not recognised", string(*featType.Geometry))
 	}
