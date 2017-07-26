@@ -37,9 +37,9 @@ func (m MultiPolygon) AsArray() [][][][]float64 {
 
 func (m *MultiPolygon) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
-	numPolys := uint32(len(m))
+	numPolys := uint32(len(*m))
 	binary.Write(buf, end, &numPolys)
-	for _, p := range m {
+	for _, p := range *m {
 		binary.Write(buf, end, p.WKB(end))
 	}
 	return buf.Bytes()
@@ -48,7 +48,7 @@ func (m *MultiPolygon) WKB(end binary.ByteOrder) []byte {
 func (m *MultiPolygon) WKT() string {
 	out := "("
 
-	for i, poly := range m {
+	for i, poly := range *m {
 		if i > 0 {
 			out += ","
 		}
