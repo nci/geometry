@@ -35,7 +35,7 @@ func (m MultiPolygon) AsArray() [][][][]float64 {
 	return out
 }
 
-func (m MultiPolygon) WKB(end binary.ByteOrder) []byte {
+func (m *MultiPolygon) WKB(end binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)
 	numPolys := uint32(len(m))
 	binary.Write(buf, end, &numPolys)
@@ -45,7 +45,7 @@ func (m MultiPolygon) WKB(end binary.ByteOrder) []byte {
 	return buf.Bytes()
 }
 
-func (m MultiPolygon) WKT() string {
+func (m *MultiPolygon) WKT() string {
 	out := "("
 
 	for i, poly := range m {
@@ -59,7 +59,7 @@ func (m MultiPolygon) WKT() string {
 	return out
 }
 
-func (m MultiPolygon) MarshalWKB(mode uint8) []byte {
+func (m *MultiPolygon) MarshalWKB(mode uint8) []byte {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, endian[mode], &mode)
 
@@ -93,7 +93,7 @@ func (m *MultiPolygon) UnmarshalWKB(in []byte) error {
 	return err
 }
 
-func (p MultiPolygon) MarshalWKT() string {
+func (p *MultiPolygon) MarshalWKT() string {
 	return fmt.Sprintf("MULTIPOLYGON (%s)", p.WKT())
 }
 
@@ -128,7 +128,7 @@ func (m *MultiPolygon) SetBSON(raw bson.Raw) error {
 }
 */
 
-func (m MultiPolygon) MarshalJSON() ([]byte, error) {
+func (m *MultiPolygon) MarshalJSON() ([]byte, error) {
 	mExp := MultiPolygonView{"MultiPolygon", m.AsArray()}
 	return json.Marshal(mExp)
 }
