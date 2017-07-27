@@ -25,10 +25,10 @@ func (m MultiPolygon) Equals(n MultiPolygon) bool {
 	return true
 }
 
-func (m MultiPolygon) AsArray() [][][][]float64 {
+func (m *MultiPolygon) AsArray() [][][][]float64 {
 	out := [][][][]float64{}
 
-	for _, p := range m {
+	for _, p := range *m {
 		out = append(out, p.AsArray())
 	}
 
@@ -94,12 +94,12 @@ func (m *MultiPolygon) UnmarshalWKB(in []byte) error {
 }
 
 func (p *MultiPolygon) MarshalWKT() string {
-	return fmt.Sprintf("MULTIPOLYGON (%s)", p.WKT())
+	return fmt.Sprintf("MULTIPOLYGON %s", p.WKT())
 }
 
 func (m *MultiPolygon) UnmarshalWKT(in string) error {
 	//MULTIPOLYGON (((4 9.5, 2 9.5, 4 5.5, 4 9.5)), ((8 9.5, 6 9.5, 8 5.5, 8 9.5)))
-	regExp := `^MULTIPOLYGON\s+\((?P<multipolygon>\(\(.*\)\))\)$`
+	regExp := `^MULTIPOLYGON\s+(?P<multipolygon>\(\(.*\)\))$`
 
 	r := regexp.MustCompile(regExp)
 	match := r.FindStringSubmatch(in)
@@ -136,7 +136,6 @@ func (m *MultiPolygon) MarshalJSON() ([]byte, error) {
 func (m *MultiPolygon) UnmarshalJSON(in []byte) error {
 	mView := MultiPolygonView{}
 	err := json.Unmarshal(in, &mView)
-
 	if err != nil {
 		return err
 	}
